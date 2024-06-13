@@ -1,0 +1,15 @@
+{
+  "name": "gas-price-scripts",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "gas-price-updates": "tsc && node dist/gas-price-updates.js"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "axios": "^1.6.3"
+  }
+}
