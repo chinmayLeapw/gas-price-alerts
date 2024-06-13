@@ -31,7 +31,14 @@ interface GasPrices {
   };
 }
 
+interface UpdatedChain {
+  chainName: string;
+  commitSha: string;
+}
+
 const gasPriceRegex = /(fixed_min_gas_price|low_gas_price|average_gas_price|high_gas_price)/;
+
+const baseUrl = 'https://github.com/cosmos/chain-registry/commit'
 
 async function getCommitsSinceLastPoll(): Promise<Commit[]> {
   // Calculate since and until parameters
@@ -60,7 +67,7 @@ async function getGasPricesForSupportedChains(): Promise<GasPrices> {
   return response.data;
 }
 
-async function processCommit(commit: Commit, supportedChains: Record<string, any>, updatedChains: string[]): Promise<void> {
+async function processCommit(commit: Commit, updatedChains: UpdatedChain[]): Promise<void> {
   const sha = commit.sha;
 
   const commitDetails = await getCommitDetails(sha);
@@ -74,7 +81,10 @@ async function processCommit(commit: Commit, supportedChains: Record<string, any
     if (path[1] !== 'chain.json') return;
     const changes = file.patch;
     if (gasPriceRegex.test(changes)) {
-      updatedChains.push(path[0]);
+      updatedChains.push({
+        chainName: path[0],
+        commitSha: sha,
+      });
     };
 
   });
@@ -112,21 +122,21 @@ async function main() {
     const commits = await getCommitsSinceLastPoll();
 
     // Step 2: Get gas prices
-    const supportedChains = await getGasPricesForSupportedChains();
+    // const supportedChains = await getGasPricesForSupportedChains();
 
-    const updatedChains: string[] = [];
+    const updatedChains: UpdatedChain[] = [];
     const promises = [];
     console.log('Number of commits: ', commits.length);
     // Step 3: Process each commit
     for (const commit of commits) {
-      promises.push(processCommit(commit, supportedChains, updatedChains));
+      promises.push(processCommit(commit, updatedChains));
     }
     await Promise.all(promises);
 
     console.log('Updated chains: ', updatedChains);
 
     if (updatedChains.length > 0) {
-      const message = `:information_source: Changes have been made for the following chains:\n${updatedChains.map(chain => `• *${chain}*`).join('\n')}`;
+      const message = `:information_source: Changes have been made for the following chains:\n${updatedChains.map(chain => `• [${chain.chainName}](${baseUrl}/${chain.commitSha})`).join('\n')}`;
       await sendSlackMessage(message);
     }
   } catch (err) {
