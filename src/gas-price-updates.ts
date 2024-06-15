@@ -136,7 +136,7 @@ async function main() {
     console.log('Updated chains: ', updatedChains);
 
     if (updatedChains.length > 0) {
-      const message = `:information_source: Changes have been made for the following chains:\n${updatedChains.map(chain => `• <${baseUrl}${chain.commitSha}|${chain.chainName}>`).join('\n')}`;
+      const message = `:information_source: Changes have been made for the following chains:\n${updatedChains.map(chain => `• <${baseUrl}/${chain.commitSha}|${chain.chainName}>`).join('\n')}`;
       await sendSlackMessage(message);
     }
   } catch (err) {
